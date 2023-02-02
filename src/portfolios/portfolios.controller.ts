@@ -9,6 +9,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { CreateAndUploadImageDto } from 'src/images/dto/create-image.dto';
+import { RemoveImageParams } from 'src/images/dto/remove-image.dto';
 import { Image } from 'src/images/images.entity';
 import { ImagesService } from 'src/images/images.service';
 import { User } from 'src/users/users.entity';
@@ -50,6 +51,18 @@ export class PortfoliosController {
       createAndUploadImageDto,
       user,
       portfolioId,
+    );
+  }
+
+  @Delete('/:portfolioId/image/:imageId')
+  async removeImageFromPortfolio(
+    @GetUser() user: User,
+    @Param() { portfolioId, imageId }: RemoveImageParams,
+  ): Promise<void> {
+    await this.imagesService.removeImageFromPortfolio(
+      portfolioId,
+      imageId,
+      user,
     );
   }
 }

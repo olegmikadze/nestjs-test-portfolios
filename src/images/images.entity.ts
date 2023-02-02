@@ -1,5 +1,11 @@
 import { Portfolio } from 'src/portfolios/portfolios.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Image {
@@ -16,4 +22,7 @@ export class Image {
     eager: true,
   })
   portfolio: Portfolio;
+
+  @CreateDateColumn()
+  created_at: Date;
 }

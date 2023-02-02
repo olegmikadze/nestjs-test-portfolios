@@ -1,7 +1,7 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
@@ -22,33 +22,31 @@ export class PortfoliosService {
   ): Promise<Portfolio> {
     const { name } = addPortfolioDto;
 
-    const duplicatedPort = await this.portfoliosRepository.findOneBy({ name });
+    const portfolioExists = await this.portfoliosRepository.findOneBy({ name });
 
-    if (duplicatedPort)
-      throw new UnprocessableEntityException(
-        'Portfolio already exists with such name!',
-      );
+    if (portfolioExists)
+      throw new ConflictException('Portfolio already exists with such name!');
 
-    const port = await this.portfoliosRepository.create({
+    const portfolio = await this.portfoliosRepository.create({
       ...addPortfolioDto,
       user,
     });
 
-    await this.portfoliosRepository.save(port);
+    await this.portfoliosRepository.save(portfolio);
 
-    return port;
+    return portfolio;
   }
 
   async deletePortfolioById(id: string, user: User): Promise<void> {
-    const portfolioToDelete = await this.portfoliosRepository
+    const portfolio = await this.portfoliosRepository
       .createQueryBuilder('portfolio')
       .where({ user })
       .andWhere({ id })
       .getOne();
 
-    if (!portfolioToDelete)
-      throw new NotFoundException('Portfolio of this user waas not found');
+    if (!portfolio)
+      throw new NotFoundException('This user doesnt own such portfolio!');
 
-    await this.portfoliosRepository.remove(portfolioToDelete);
+    await this.portfoliosRepository.remove(portfolio);
   }
 }

@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,7 +13,6 @@ import { User } from './users.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindOneByEmailDto } from './dto/find-user.dto';
-import { DeleteMeDto } from './dto/delete-me.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -22,18 +23,20 @@ export class UsersService {
   async findOneByEmail(findOneByemailDto: FindOneByEmailDto): Promise<User> {
     const { email } = findOneByemailDto;
 
-    return await this.usersRepository.findOneBy({ email });
+    const user = await this.usersRepository.findOneBy({ email });
+
+    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
+
+    return user;
   }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { email, password } = createUserDto;
 
-    const duplicatedUser = await this.findOneByEmail({ email });
+    const userExists = await this.usersRepository.findOneBy({ email });
 
-    if (duplicatedUser)
-      throw new UnprocessableEntityException(
-        'User by such email already exists!',
-      );
+    if (userExists)
+      throw new UnprocessableEntityException('User already exists');
 
     const salt = await bcrypt.genSalt();
 
@@ -50,7 +53,7 @@ export class UsersService {
     return user;
   }
 
-  async deleteMe(user: User): Promise<void> {
+  async removeProfile(user: User): Promise<void> {
     await this.usersRepository.remove(user);
   }
 }

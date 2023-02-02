@@ -1,5 +1,6 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { NotFoundError } from 'rxjs';
 import { Portfolio } from 'src/portfolios/portfolios.entity';
 import { User } from 'src/users/users.entity';
 import { Repository } from 'typeorm';
@@ -17,7 +18,7 @@ export class ImagesService {
   ) {}
 
   async getImages() {
-    return await this.imagesRepository.find();
+    return await this.imagesRepository.find({ order: { created_at: 'DESC' } });
   }
 
   async createAndUpload(
@@ -30,8 +31,7 @@ export class ImagesService {
       user,
     });
 
-    if (!portfolio)
-      throw new UnprocessableEntityException('You dont have such portfolio');
+    if (!portfolio) throw new NotFoundError('User doesnt own such portfolio!');
 
     const image = await this.imagesRepository.create({
       ...createAndUploadImageDto,
@@ -41,5 +41,29 @@ export class ImagesService {
     await this.imagesRepository.save(image);
 
     return image;
+  }
+
+  async removeImageFromPortfolio(
+    portfolioId: string,
+    imageId: string,
+    user: User,
+  ) {
+    const portfolio = await this.portfoliosRepository.findOneBy({
+      id: portfolioId,
+      user,
+    });
+
+    if (!portfolio)
+      throw new NotFoundException('This user doesnt own such portfolio');
+
+    const image = await this.imagesRepository.findOneBy({
+      id: imageId,
+      portfolio,
+    });
+
+    if (!image)
+      throw new NotFoundException('This portfolio doesnt own such image');
+
+    await this.imagesRepository.remove(image);
   }
 }

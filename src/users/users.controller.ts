@@ -10,11 +10,7 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Delete('/me')
-  async deleteProfile(@GetUser() user: User): Promise<void> {
-    console.log(
-      '🚀 : file: users.controller.ts:14 : UsersController : deleteProfile : user',
-      user,
-    );
-    await this.usersService.deleteMe(user);
+  async removeProfile(@GetUser() user: User): Promise<void> {
+    await this.usersService.removeProfile(user);
   }
 }
